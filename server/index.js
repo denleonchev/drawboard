@@ -11,6 +11,16 @@ const cretaeDrawing = ({ connection, name }) => {
     .then(() => console.log(`created a drawing with the name ${name}`))
 }
 
+const subscribeToDrawingsLines = ({ client, connection, drawingId }) => {
+  return r.table('lines')
+    .filter(r.row('drawingId').eq(drawingId))
+    .changes({include_initial: true})
+    .run(connection)
+    .then((cursor) => {
+      cursor.each((err, lineRow) => client.emit(`drawingLine:${drawingId}`, lineRow.new_val))
+    })
+}
+
 const subscribeToDrawings = ({client, connection }) => {
   r.table('drawings')
     .changes({ include_initial: true })
@@ -18,6 +28,14 @@ const subscribeToDrawings = ({client, connection }) => {
     .then((cursor) => {
       cursor.each((err, drawingRow) => client.emit('drawing', drawingRow.new_val))
     })
+}
+
+const handleLinePublish = ({ connection, line }) => {
+  console.log('saving line to db')
+  console.log(line)
+  r.table('lines')
+    .insert(Object.assign(line, { timestamp: new Date() }))
+    .run(connection)
 }
 
 r.connect({
@@ -34,6 +52,19 @@ r.connect({
         client,
         connection
       }))
+      client.on('publishLine', (line) => {
+        handleLinePublish({
+          connection,
+          line
+        })
+      })
+      client.on('subscribeToDrawingLines', (drawingId) => {
+        subscribeToDrawingsLines({
+          client,
+          connection,
+          drawingId
+        })
+      })
     })
   })
 

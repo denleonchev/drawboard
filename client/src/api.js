@@ -7,11 +7,22 @@ function subscribeToDrawings(cb) {
   socket.emit('subscribeToDrawings')
 }
 
+const subscribeToDrawingLines = (drawingId, cb) => {
+  socket.on(`drawingLine:${drawingId}`, cb)
+  socket.emit('subscribeToDrawingLines', drawingId)
+}
+
 function createDrawing(name) {
   socket.emit('createDrawing', { name })
 }
 
+const publishLine = ({ drawingId, line }) => {
+  socket.emit('publishLine', { drawingId, ...line })
+}
+
 export {
   createDrawing,
-  subscribeToDrawings
+  subscribeToDrawings,
+  publishLine,
+  subscribeToDrawingLines
 }
