@@ -70,5 +70,5 @@ r.connect({
 
 
 
-const port = 8000
+const port = parseInt(process.argv[2], 10) || 8000
 io.listen(8000, () => {console.log(`Listening on port ${port}`)})
